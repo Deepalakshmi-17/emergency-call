@@ -1,0 +1,114 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read the CSV file
+df = pd.read_csv('911.csv')
+
+# Analyze top zip codes and townships
+top_5_zips = df['zip'].value_counts().head(5)
+print("Top 5 Zip Codes:")
+print(top_5_zips)
+
+top_10_twps = df['twp'].value_counts().head(10)
+print("Top 10 Townships:")
+print(top_10_twps)
+
+# Analyze unique call titles
+num_unique_titles = len(df['title'].unique())
+print(f"Number of unique call titles: {num_unique_titles}")
+
+# Extract and analyze the reason for the call
+df['Reason'] = df['title'].apply(lambda title: title.split(':')[0])
+top_reason = df['Reason'].value_counts().head(1)
+print("Most common reason for calls:")
+print(top_reason)
+
+# Plot the count of each reason
+plt.figure(figsize=(10, 6))
+sns.countplot(x='Reason', data=df, palette='viridis')
+plt.title('Count of Each Reason')
+plt.xlabel('Reason')
+plt.ylabel('Count')
+plt.show()
+
+# Data type conversion and feature extraction
+df['timeStamp'] = pd.to_datetime(df['timeStamp'])
+df['Hour'] = df['timeStamp'].apply(lambda time: time.hour)
+df['Month'] = df['timeStamp'].apply(lambda time: time.month)
+df['day_of_week'] = df['timeStamp'].apply(lambda time: time.day_of_week)
+
+# Map day of week numbers to names
+dmap = {0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'}
+df['day_of_week'] = df['day_of_week'].map(dmap)
+
+# Visualizing data by day of week and month
+plt.figure(figsize=(12, 6))
+sns.countplot(x='day_of_week', data=df, hue='Reason', palette='viridis')
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.title('911 Calls by Day of Week and Reason')
+plt.xlabel('Day of Week')
+plt.ylabel('Count')
+plt.show()
+
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Month', data=df, hue='Reason', palette='viridis')
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.title('911 Calls by Month and Reason')
+plt.xlabel('Month')
+plt.ylabel('Count')
+plt.show()
+
+# Grouping and plotting data by month
+bymonth = df.groupby('Month').size()
+plt.figure(figsize=(12, 6))
+bymonth.plot(kind='bar', color='skyblue')
+plt.title('Number of 911 Calls by Month')
+plt.xlabel('Month')
+plt.ylabel('Number of Calls')
+plt.xticks(ticks=range(1, 13), labels=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=45)
+plt.show()
+
+# Analyzing data by date
+df['Date'] = df['timeStamp'].apply(lambda t: t.date())
+date_counts = df.groupby('Date').size()
+
+plt.figure(figsize=(12, 6))
+date_counts.plot(kind='line', color='blue')
+plt.title('Number of 911 Calls by Date')
+plt.xlabel('Date')
+plt.ylabel('Number of Calls')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Heatmaps for day and hour
+dayHour = df.groupby(by=['day_of_week', 'Hour']).size().unstack()
+
+plt.figure(figsize=(12, 8))
+sns.heatmap(dayHour, cmap='coolwarm', annot=True, fmt='d', linewidths=0.5)
+plt.title('Heatmap of 911 Calls by Day of Week and Hour')
+plt.xlabel('Hour')
+plt.ylabel('Day of Week')
+plt.show()
+
+plt.figure(figsize=(12, 8))
+sns.clustermap(dayHour, cmap='coolwarm', annot=True, fmt='d')
+plt.title('Clustermap of 911 Calls by Day of Week and Hour')
+plt.show()
+
+# Heatmaps for day and month
+daymonth = df.groupby(by=['day_of_week', 'Month']).size().unstack()
+
+plt.figure(figsize=(12, 8))
+sns.heatmap(daymonth, cmap='viridis')
+plt.title('Heatmap of 911 Calls by Day of Week and Month')
+plt.xlabel('Month')
+plt.ylabel('Day of Week')
+plt.show()
+
+plt.figure(figsize=(12, 8))
+sns.clustermap(daymonth, cmap='viridis')
+plt.title('Clustermap of 911 Calls by Day of Week and Month')
+plt.show()
